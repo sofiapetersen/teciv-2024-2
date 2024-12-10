@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atividade de Programação</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            overflow-y: scroll;
+        }
+
+        header {
+            background-color: #1dd3f8;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            width: 100%;
+        }
+
+        .logo {
+            width: 100px;
+            vertical-align: middle;
+            animation: spin 5s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        h1 {
+            display: inline;
+            color: #fff;
+            text-shadow: 2px 2px 5px #000;
+        }
+
+        #game-controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px auto;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        #game-container {
+            width: 500px;
+            height: 400px;
+            background-color: #fff;
+            border: 2px solid #1dd3f8;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        #hud {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 0.8em;
+        }
+
+        #controls {
+            width: 300px;
+            text-align: left;
+            margin-left: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #44af69;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            display: block;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #377d58;
+        }
+
+        #bnccContent, #objectiveContent, #commandContent, #manualContent {
+            display: none;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid #1dd3f8;
+            padding: 10px;
+            margin-top: 10px;
+            text-align: left;
+        }
+
+        #manualButton {
+            background-color: #ffa400;
+        }
+
+        footer {
+            background-color: #1dd3f8;
+            padding: 10px;
+            color: #ffa400;
+            text-shadow: 2px 2px 5px #000;
+            text-align: center;
+            position: relative;
+            width: 100%;
+        }
+
+        .astronaut {
+            position: absolute;
+            right: 80px;
+            top: 20px;
+            width: 80px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .ovni {
+            width: 80px;
+            animation: move 3s ease-in-out infinite;
+        }
+
+        @keyframes move {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            50% {
+                transform: translateX(20px);
+            }
+        }
+
+        .hint {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-center {
+            width: 200px;
+            margin-bottom: 20px;
+        }
+
+        #startButton {
+            display: block;
+            background-color: #1dd3f8;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            cursor: pointer;
+            border-radius: 5px;
+            z-index: 1001;
+        }
+
+        #startButton:hover {
+            background-color: #1198b0;
+        }
+
+        .command-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .speech-box {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://people.ufpr.br/~jefer/doutorado/metaverses/ra/logomanna.png" alt="Logo Manna Team" class="logo">
+        <h1>Atividade de Programação</h1>
+        <img src="https://people.ufpr.br/~jefer/doutorado/metaverses/ra/astro-semfundo.png" alt="Astronauta" class="astronaut">
+    </header>
+    <div id="game-controls">
+        <div id="game-container">
+            <canvas id="gameCanvas"></canvas>
+            <div class="overlay" id="loadingOverlay">
+                <img src="https://people.ufpr.br/~jefer/doutorado/metaverses/games/MannaQuiz/ODS-logos/goal-4/GOAL_4_PRIMARY_ICON/GOAL_4_SVG/TheGlobalGoals_Icons_Color_Goal_4.svg" alt="Goal 4 Logo" class="logo-center">
+                <button id="startButton">Iniciar</button>
+            </div>
+            <div id="hud">
+                <p>Item: <span id="itemStatus">Nenhum</span></p>
+                <p>Cor: <span id="colorStatus">N/A</span></p>
+            </div>
+            <div class="command-box" id="commandBox"></div>
+        </div>
+        <div id="controls">
+            <label for="faseSelect">Escolha a fase:</label>
+            <select id="faseSelect">
+                <option value="1">Fase 1</option>
+                <option value="2">Fase 2</option>
+                <option value="3">Fase 3</option>
+                <option value="4">Fase 4</option>
+                <option value="5">Fase 5</option>
+                <option value="6">Fase 6</option>
+                <option value="7">Fase 7</option>
+                <option value="8">Fase 8</option>
+            </select>
+            <h2>Comandos</h2>
+            <textarea id="codeInput" placeholder="Digite seus comandos aqui..."></textarea>
+            <button id="runButton">Executar</button>
+            <button id="resetButton">Reiniciar</button>
+            <button id="objectiveButton">Objetivo da Fase</button>
+            <div id="objectiveContent">
+                <p>Aqui estará a explicação do objetivo da fase atual.</p>
+            </div>
+            <button id="commandButton">Comandos Disponíveis</button>
+            <div id="commandContent">
+                <p>mover <valor> <direção> (ex: mover 50 direita)</p>
+                <p>Direções disponíveis: cima, baixo, esquerda, direita</p>
+                <p>repita [n] { instruções }</p>
+                <p>se [cor] então { instruções }</p>
+                <p>diga "frase"</p>
+                <p>PEGAR ITEM</p>
+                <!--<p>SOLTAR ITEM</p>-->
+                <p>As palavras com letra maiúscula são funções.</p>
+            </div>
+        </div>
+    </div>
+    <button id="bnccButton" style="margin-top: 10px;">Habilidades BNCC</button>
+    <div id="bnccContent">
+        <p>Aqui estão as habilidades da BNCC atendidas por esta atividade:</p>
+        <ul>
+            <li>EF05MA18: Construir sequências e reconhecer padrões.</li>
+            <li>EF67MA28: Reconhecer e representar algoritmos simples.</li>
+            <li>EF67MA29: Compreender e usar laços de repetição em algoritmos.</li>
+            <li>EF89MA18: Desenvolver soluções para problemas usando programação.</li>
+            <li>EF05MA15: Compreender o conceito de variável.</li>
+            <li>EF06MA20: Analisar e resolver problemas utilizando programação.</li>
+            <li>PC01AB01: Compreender que os computadores não têm inteligência e apenas realizam o que é programado.</li>
+            <li>PC05AL01: Conhecer e utilizar algoritmos com repetições.</li>
+            <li>CD04LD03: Usar simuladores educacionais.</li>
+            <li>EF03CO02: Criar e simular algoritmos representados em linguagem oral, escrita ou pictográfica, que incluam sequências e repetições simples com condição (iterações indefinidas), para resolver problemas de forma independente e em colaboração.</li>
+            <li>EF04CO03: Criar e simular algoritmos representados em linguagem oral, escrita ou pictográfica, que incluam sequências e repetições simples e aninhadas (iterações definidas e indefinidas), para resolver problemas de forma independente e em colaboração.</li>
+            <li>EF06CO02: Elaborar algoritmos que envolvam instruções sequenciais, de repetição e de seleção usando uma linguagem de programação.</li>
+            <li>EI03CO02: Expressar as etapas para a realização de uma tarefa de forma clara e ordenada.</li>
+            <li>EI03CO04: Criar e representar algoritmos para resolver problemas.</li>
+            <li>EF01CO02: Identificar e seguir sequências de passos aplicados no dia a dia para resolver problemas.</li>
+        </ul>
+    </div>
+    <button id="manualButton">Manual</button>
+    <div id="manualContent">
+        <h2>Manual do Professor</h2>
+        <p><strong>Atividade de Programação com Robô</strong></p>
+        <p>Este programa foi desenvolvido para auxiliar professores a ensinarem conceitos de programação, pensamento computacional e robótica para alunos do ensino fundamental e médio.</p>
+        <h3>Como usar o programa em sala de aula</h3>
+        <p>1. Explique os comandos disponíveis e como inseri-los na área de código.</p>
+        <p>2. Demonstre a execução de um código simples e mostre como o robô responde aos comandos.</p>
+        <p>3. Deixe os alunos explorarem as diferentes fases e tentarem resolver os desafios propostos.</p>
+        <h3>Habilidades da BNCC atendidas</h3>
+        <ul>
+            <li>EF05MA18: Construir sequências e reconhecer padrões.</li>
+            <li>EF67MA28: Reconhecer e representar algoritmos simples.</li>
+            <li>EF67MA29: Compreender e usar laços de repetição em algoritmos.</li>
+            <li>EF89MA18: Desenvolver soluções para problemas usando programação.</li>
+            <li>EF05MA15: Compreender o conceito de variável.</li>
+            <li>EF06MA20: Analisar e resolver problemas utilizando programação.</li>
+            <li>PC01AB01: Compreender que os computadores não têm inteligência e apenas realizam o que é programado.</li>
+            <li>PC05AL01: Conhecer e utilizar algoritmos com repetições.</li>
+            <li>CD04LD03: Usar simuladores educacionais.</li>
+            <li>EF03CO02: Criar e simular algoritmos representados em linguagem oral, escrita ou pictográfica, que incluam sequências e repetições simples com condição (iterações indefinidas), para resolver problemas de forma independente e em colaboração.</li>
+            <li>EF04CO03: Criar e simular algoritmos representados em linguagem oral, escrita ou pictográfica, que incluam sequências e repetições simples e aninhadas (iterações definidas e indefinidas), para resolver problemas de forma independente e em colaboração.</li>
+            <li>EF06CO02: Elaborar algoritmos que envolvam instruções sequenciais, de repetição e de seleção usando uma linguagem de programação.</li>
+            <li>EI03CO02: Expressar as etapas para a realização de uma tarefa de forma clara e ordenada.</li>
+            <li>EI03CO04: Criar e representar algoritmos para resolver problemas.</li>
+            <li>EF01CO02: Identificar e seguir sequências de passos aplicados no dia a dia para resolver problemas.</li>
+        </ul>
+        <h3>Dicas para cada fase</h3>
+        <p><strong>Fase 1:</strong> Levar o robô até o ponto final. Incentive os alunos a pensarem nos passos necessários para chegar ao ponto final.</p>
+        <p><strong>Fase 2:</strong> Levar o robô até o ponto final com obstáculos. Os alunos devem planejar como evitar os obstáculos.</p>
+        <p><strong>Fase 3:</strong> Levar o robô até o ponto final com mais obstáculos. Mais planejamento será necessário.</p>
+        <p><strong>Fase 4:</strong> Levar o robô através de um labirinto simples até o ponto final.</p>
+        <p><strong>Fase 5:</strong> Levar os itens até os destinos marcados.</p>
+        <p><strong>Fase 6:</strong> Levar os itens até os destinos marcados com obstáculos.</p>
+        <p><strong>Fase 7:</strong> Levar os itens até os destinos marcados, desviando os obstáculos.</p>
+        <p><strong>Fase 8:</strong> Utilizar condicionais de cores para levar os itens aos destinos correspondentes.</p>
+        <h3>Perguntas de feedback para os alunos</h3>
+        <ul>
+            <li>Quais foram os desafios encontrados durante a programação do robô?</li>
+            <li>Como você resolveu os problemas que surgiram?</li>
+            <li>Você conseguiu atingir o objetivo da fase? Se não, o que você acha que deu errado?</li>
+            <li>Como você usaria os laços de repetição para simplificar seu código?</li>
+            <li>Como as condicionais podem ser usadas para tomar decisões na programação?</li>
+        </ul>
+        <button id="downloadManual">Baixar Manual em PDF</button>
+    </div>
+    <footer>
+        <p>by Jéfer</p>
+        <img src="https://people.ufpr.br/~jefer/doutorado/metaverses/ra/ovni.png" alt="OVNI" class="ovni">
+    </footer>
+    <div class="hint" id="hint"></div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const canvas = document.getElementById("gameCanvas");
+            const ctx = canvas.getContext("2d");
+            const runButton = document.getElementById("runButton");
+            const resetButton = document.getElementById("resetButton");
+            const codeInput = document.getElementById("codeInput");
+            const bnccButton = document.getElementById("bnccButton");
+            const bnccContent = document.getElementById("bnccContent");
+            const objectiveButton = document.getElementById("objectiveButton");
+            const objectiveContent = document.getElementById("objectiveContent");
+            const commandButton = document.getElementById("commandButton");
+            const commandContent = document.getElementById("commandContent");
+            const manualButton = document.getElementById("manualButton");
+            const manualContent = document.getElementById("manualContent");
+            const faseSelect = document.getElementById("faseSelect");
+            const hintDiv = document.getElementById("hint");
+            const itemStatus = document.getElementById("itemStatus");
+            const colorStatus = document.getElementById("colorStatus");
+            const loadingOverlay = document.getElementById("loadingOverlay");
+            const startButton = document.getElementById("startButton");
+            const commandBox = document.getElementById("commandBox");
+
+            canvas.width = 500;
+            canvas.height = 400;
+
+            const robotImage = new Image();
+            robotImage.src = 'https://people.ufpr.br/~jefer/doutorado/metaverses/ra/imagens/mannabot.png';
+
+            let robot = {
+                x: 50,
+                y: 50,
+                size: 66,
+                moveStep: 2,
+                carrying: false,
+                color: 'N/A',
+                direction: 'direita'
+            };
+
+            let obstacles = [];
+            let items = [];
+            let targets = [];
+            let endPoint = { x: 450, y: 200, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+            let level = 1;
+            let commandsQueue = [];
+            let speechBoxes = [];
+
+            function drawRobot() {
+                ctx.save();
+                ctx.translate(robot.x + robot.size / 2, robot.y + robot.size / 2);
+                let rotationAngle;
+                switch (robot.direction) {
+                    case 'cima':
+                        rotationAngle = Math.PI / 2;
+                        break;
+                    case 'baixo':
+                        rotationAngle = -Math.PI / 2;
+                        break;
+                    case 'esquerda':
+                        rotationAngle = Math.PI;
+                        break;
+                    case 'direita':
+                    default:
+                        rotationAngle = 0;
+                        break;
+                }
+                ctx.rotate(rotationAngle);
+                ctx.drawImage(robotImage, -robot.size / 2, -robot.size / 2, robot.size, robot.size * 1.1);
+                ctx.restore();
+            }
+
+            function drawObstacles() {
+                ctx.fillStyle = '#ff0000';
+                obstacles.forEach(obstacle => {
+                    ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                });
+            }
+
+            function drawItems() {
+                items.forEach(item => {
+                    ctx.fillStyle = item.color;
+                    ctx.beginPath();
+                    ctx.arc(item.x, item.y, item.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            function drawTargets() {
+                targets.forEach(target => {
+                    ctx.strokeStyle = target.color;
+                    ctx.strokeRect(target.x, target.y, target.width, target.height);
+                });
+            }
+
+            function drawEndPoint() {
+                ctx.strokeStyle = endPoint.color;
+                ctx.strokeRect(endPoint.x, endPoint.y, endPoint.width, endPoint.height);
+            }
+
+            function detectCollisions() {
+                if (robot.x < 0 || robot.x + robot.size > canvas.width || robot.y < 0 || robot.y + robot.size > canvas.height) {
+                    alert('Colisão com a borda! Tente novamente.');
+                    resetLevel();
+                    return true;
+                }
+
+                for (const obstacle of obstacles) {
+                    if (
+                        robot.x < obstacle.x + obstacle.width &&
+                        robot.x + robot.size > obstacle.x &&
+                        robot.y < obstacle.y + obstacle.height &&
+                        robot.y + robot.size > obstacle.y
+                    ) {
+                        alert('Colisão com obstáculo! Tente novamente.');
+                        resetLevel();
+                        return true;
+                    }
+                }
+
+                for (const item of items) {
+                    if (
+                        robot.x < item.x + item.size &&
+                        robot.x + robot.size > item.x - item.size &&
+                        robot.y < item.y + item.size &&
+                        robot.y + robot.size > item.y - item.size
+                    ) {
+                        if (robot.carrying) {
+                            item.x = robot.x + robot.size / 2 - item.size / 2;
+                            item.y = robot.y + robot.size / 2 - item.size / 2;
+                        }
+                        robot.color = item.color;
+                    }
+                }
+
+                for (const target of targets) {
+                    if (
+                        robot.x < target.x + target.width &&
+                        robot.x + robot.size > target.x &&
+                        robot.y < target.y + target.height &&
+                        robot.y + robot.size > target.y
+                    ) {
+                        const item = items.find(item => item.collected);
+                        if (item && robot.carrying && item.color === target.color) {
+                            item.collected = false;
+                            robot.carrying = false;
+                            itemStatus.textContent = 'SOLTO';
+                            alert('Parabéns! Você soltou o item no local correto.');
+                        }
+                    }
+                }
+
+                if (
+                    robot.x < endPoint.x + endPoint.width &&
+                    robot.x + robot.size > endPoint.x &&
+                    robot.y < endPoint.y + endPoint.height &&
+                    robot.y + robot.size > endPoint.y
+                ) {
+                    alert('Parabéns! Você completou o nível ' + level);
+                    level++;
+                    loadLevel(level);
+                    return true;
+                }
+
+                return false;
+            }
+
+            function loadLevel(level) {
+                robot.x = 50;
+                robot.y = 50;
+                robot.carrying = false;
+                robot.color = 'N/A';
+                items = [];
+                obstacles = [];
+                targets = [];
+                if (level === 1) {
+                    endPoint = { x: 410, y: 300, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+                    objectiveContent.innerHTML = '<p>Fase 1: Levar o robô até o ponto final.</p>';
+                } else if (level === 2) {
+                    obstacles = [
+                        { x: 200, y: 100, width: 50, height: 50 },
+                        { x: 300, y: 150, width: 50, height: 50 },
+                        { x: 400, y: 250, width: 50, height: 50 }
+                    ];
+                    endPoint = { x: 410, y: 300, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+                    objectiveContent.innerHTML = '<p>Fase 2: Levar o robô até o ponto final, mas vão ter 3 obstáculos no meio do caminho.</p>';
+                } else if (level === 3) {
+                    obstacles = [
+                        { x: 150, y: 200, width: 50, height: 50 },
+                        { x: 250, y: 150, width: 50, height: 50 },
+                        { x: 300, y: 250, width: 50, height: 50 },
+                        { x: 200, y: 200, width: 50, height: 50 },
+                        { x: 380, y: 80, width: 50, height: 50 }
+                    ];
+                    endPoint = { x: 410, y: 300, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+                    objectiveContent.innerHTML = '<p>Fase 3: Levar o robô até o ponto final, mas vão ter 5 obstáculos no meio do caminho.</p>';
+                } else if (level === 4) {
+                    obstacles = [
+                        { x: 100, y: 150, width: 50, height: 50 },
+                        { x: 150, y: 200, width: 50, height: 50 },
+                        { x: 200, y: 250, width: 50, height: 50 },
+                        { x: 300, y: 150, width: 50, height: 50 },
+                        { x: 350, y: 200, width: 50, height: 50 },
+                        { x: 400, y: 250, width: 50, height: 50 }
+                    ];
+                    endPoint = { x: 255, y: 240, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+                    objectiveContent.innerHTML = '<p>Fase 4: Levar o robô até o ponto final através de um labirinto simples.</p>';
+                } else if (level === 5) {
+                    items = [
+                        { x: 400, y: 50, size: 30, color: 'rgb(0,255,0)', collected: false, hint: 'Item1' }
+                    ];
+                    targets = [
+                        { x: 410, y: 300, width: 90, height: 76.5, color: 'rgb(0,255,0)', hint: 'Destino Item' }
+                    ];
+                    endPoint = { x: 90, y: 200, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+                    objectiveContent.innerHTML = '<p>Fase 5: Levar os itens até os destinos marcados.</p>';
+                } else if (level === 6) {
+                    obstacles = [
+                        { x: 150, y: 150, width: 50, height: 50 },
+                        { x: 200, y: 200, width: 50, height: 50 },
+                        { x: 250, y: 250, width: 50, height: 50 },
+                        { x: 300, y: 100, width: 50, height: 50 },
+                        { x: 350, y: 150, width: 50, height: 50 }
+                    ];
+                    items = [
+                        { x: 400, y: 50, size: 30, color: 'rgb(0,255,0)', collected: false, hint: 'Item1' }
+                    ];
+                    targets = [
+                        { x: 410, y: 300, width: 90, height: 76.5, color: 'rgb(0,255,0)', hint: 'Destino Item' }
+                    ];
+                    endPoint = { x: 110, y: 300, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+                    objectiveContent.innerHTML = '<p>Fase 6: Levar os itens até os destinos marcados, com obstáculos no caminho.</p>';
+                } else if (level === 7) {
+                    obstacles = [
+                        { x: 150, y: 150, width: 50, height: 50 },
+                        { x: 200, y: 200, width: 50, height: 50 },
+                        { x: 250, y: 250, width: 50, height: 50 }
+                    ];
+                    items = [
+                        { x: 300, y: 150, size: 30, color: 'rgb(0,255,0)', collected: false, hint: 'Verde' },
+                        { x: 200, y: 350, size: 30, color: 'rgb(0,0,255)', collected: false, hint: 'Azul' }
+                    ];
+                    targets = [
+                        { x: 410, y: 300, width: 90, height: 76.5, color: 'rgb(0,255,0)', hint: 'Destino Verde' },
+                        { x: 400, y: 150, width: 90, height: 76.5, color: 'rgb(0,0,255)', hint: 'Destino Azul' }
+                    ];
+                    endPoint = { x: 410, y: 200, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+                    objectiveContent.innerHTML = '<p>Fase 7: Levar os itens até os destinos marcados, desviando os obstáculos.</p>';
+                } else if (level === 8) {
+                    items = [
+                        { x: 150, y: 50, size: 30, color: 'rgb(0,0,255)', collected: false, hint: 'Azul' },
+                        { x: 300, y: 100, size: 30, color: 'rgb(255,165,0)', collected: false, hint: 'Laranja' },
+                        { x: 450, y: 200, size: 30, color: 'rgb(0,255,0)', collected: false, hint: 'Verde' }
+                    ];
+                    targets = [
+                        { x: 150, y: 200, width: 50, height: 50, color: 'rgb(0,0,255)', hint: 'Destino Azul' },
+                        { x: 300, y: 300, width: 50, height: 50, color: 'rgb(255,165,0)', hint: 'Destino Laranja' },
+                        { x: 400, y: 300, width: 50, height: 50, color: 'rgb(0,255,0)', hint: 'Destino Verde' }
+                    ];
+                    endPoint = { x: 380, y: 90, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+                    objectiveContent.innerHTML = '<p>Fase 8: Utilizar condicionais de cores para levar os itens aos destinos correspondentes.</p>';
+                }
+                drawScene();
+            }
+
+            function resetLevel() {
+                loadLevel(level);
+            }
+
+            function drawScene() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawObstacles();
+                drawItems();
+                drawTargets();
+                drawEndPoint();
+                drawRobot();
+                updateColorStatus();
+                drawSpeechBoxes();
+            }
+
+            function showCommand(command) {
+                commandBox.textContent = command;
+                commandBox.style.display = 'block';
+                setTimeout(() => {
+                    commandBox.style.display = 'none';
+                }, 1000);
+            }
+
+            function moveRobot(distance, direction) {
+                showCommand(`mover ${distance} ${direction}`);
+                robot.direction = direction;
+                const steps = distance / robot.moveStep;
+                let moved = 0;
+                const interval = setInterval(() => {
+                    if (moved < steps) {
+                        if (direction === 'cima') {
+                            robot.y -= robot.moveStep;
+                        } else if (direction === 'baixo') {
+                            robot.y += robot.moveStep;
+                        } else if (direction === 'esquerda') {
+                            robot.x -= robot.moveStep;
+                        } else if (direction === 'direita') {
+                            robot.x += robot.moveStep;
+                        }
+                        moved++;
+                        drawScene();
+                        if (detectCollisions()) {
+                            clearInterval(interval);
+                        }
+                    } else {
+                        clearInterval(interval);
+                        processCommandQueue();
+                    }
+                }, 10);
+            }
+
+            function executeCommands(commands) {
+                commandsQueue = commands.split('\n').map(command => command.trim()).filter(command => command.length > 0);
+                processCommandQueue();
+            }
+
+            function processCommandQueue() {
+                if (commandsQueue.length > 0) {
+                    const command = commandsQueue.shift();
+                    const parts = command.split(' ');
+                    const action = parts[0];
+                    const value = parseInt(parts[1], 10);
+
+                    if (action === 'mover') {
+                        const direction = parts[2];
+                        moveRobot(value, direction);
+                    } else if (action === 'repita') {
+                        const repeatCount = parseInt(parts[1].slice(1, -1), 10);
+                        const repeatCommands = command.slice(command.indexOf('{') + 1, command.lastIndexOf('}')).trim();
+                        const expandedCommands = Array(repeatCount).fill(repeatCommands).join('\n');
+                        commandsQueue = expandedCommands.split('\n').concat(commandsQueue);
+                        processCommandQueue();
+                    } else if (action === 'se') {
+                        const color = parts[1].slice(1, -1);
+                        const conditionCommands = command.slice(command.indexOf('{') + 1, command.lastIndexOf('}')).trim();
+                        console.log("robo: " + robot.color)
+                        console.log("cor: " + color)
+                        if (robot.color === color) {
+                            commandsQueue = conditionCommands.split('\n').concat(commandsQueue);
+                        }
+                        processCommandQueue();
+                    } else if (action === 'PEGAR' && parts[1] === 'ITEM') {
+                        showCommand('PEGAR ITEM');
+                        if (!robot.carrying) {
+                            const item = items.find(item => !item.collected && Math.abs(robot.x + robot.size / 2 - item.x) < item.size && Math.abs(robot.y + robot.size / 2 - item.y) < item.size);
+                            if (item) {
+                                robot.carrying = true;
+                                itemStatus.textContent = `Item: ${item.hint}`;
+                                item.collected = true;
+                                drawScene();
+                                processCommandQueue();
+                            } else {
+                                alert('Nenhum item para pegar!');
+                            }
+                        } else {
+                            alert('Você já está carregando um item!');
+                        }
+                    } else if (action === 'SOLTAR' && parts[1] === 'ITEM') {
+                        showCommand('SOLTAR ITEM');
+                        if (robot.carrying) {
+                            const item = items.find(item => item.collected);
+                            if (item) {
+                                const target = targets.find(target => target.color === item.color && robot.x < target.x + target.width && robot.x + robot.size > target.x && robot.y < target.y + target.height && robot.y + robot.size > target.y);
+                                if (target) {
+                                    item.collected = false;
+                                    robot.carrying = false;
+                                    itemStatus.textContent = 'SOLTO';
+                                    drawScene();
+                                    alert('Parabéns! Você soltou o item no local correto.');
+                                } else {
+                                    alert('Solte o item na área correta!');
+                                }
+                                processCommandQueue();
+                            }
+                        } else {
+                            alert('Você não está carregando nenhum item!');
+                        }
+                    } else if (action === 'diga') {
+                        const phrase = command.slice(command.indexOf('"') + 1, command.lastIndexOf('"'));
+                        showSpeechBox(phrase);
+                        processCommandQueue();
+                    }
+                } else {
+                    itemStatus.textContent = 'Nenhum';
+                }
+            }
+
+            function updateColorStatus() {
+                colorStatus.textContent = robot.color;
+            }
+
+            function showSpeechBox(phrase) {
+                const speechBox = {
+                    x: robot.x + robot.size / 2,
+                    y: robot.y - 20,
+                    text: phrase
+                };
+                speechBoxes.push(speechBox);
+                setTimeout(() => {
+                    speechBoxes.shift();
+                    drawScene();
+                }, 2000);
+                drawScene();
+            }
+
+            function drawSpeechBoxes() {
+                speechBoxes.forEach(box => {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(box.x - 30, box.y - 20, 60, 20);
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText(box.text, box.x - 25, box.y - 5);
+                });
+            }
+
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                let hint = '';
+                obstacles.forEach(obstacle => {
+                    if (x > obstacle.x && x < obstacle.x + obstacle.width && y > obstacle.y && y < obstacle.y + obstacle.height) {
+                        hint = 'Obstáculo';
+                    }
+                });
+
+                items.forEach(item => {
+                    if (Math.sqrt((x - item.x) ** 2 + (y - item.y) ** 2) < item.size) {
+                        hint = item.hint;
+                    }
+                });
+
+                targets.forEach(target => {
+                    if (x > target.x && x < target.x + target.width && y > target.y && y < target.y + target.height) {
+                        hint = target.hint;
+                    }
+                });
+
+                if (x > endPoint.x && x < endPoint.x + endPoint.width && y > endPoint.y && y < endPoint.y + endPoint.height) {
+                    hint = 'Ponto Final';
+                }
+
+                if (hint) {
+                    hintDiv.textContent = hint;
+                    hintDiv.style.left = `${e.pageX}px`;
+                    hintDiv.style.top = `${e.pageY - 30}px`;
+                    hintDiv.style.display = 'block';
+                } else {
+                    hintDiv.style.display = 'none';
+                }
+            });
+
+            runButton.addEventListener("click", () => {
+                const commands = codeInput.value;
+                executeCommands(commands);
+            });
+
+            resetButton.addEventListener("click", () => {
+                codeInput.value = '';
+                resetLevel();
+            });
+
+            bnccButton.addEventListener("click", () => {
+                bnccContent.style.display = bnccContent.style.display === 'block' ? 'none' : 'block';
+            });
+
+            objectiveButton.addEventListener("click", () => {
+                objectiveContent.style.display = objectiveContent.style.display === 'block' ? 'none' : 'block';
+            });
+
+            commandButton.addEventListener("click", () => {
+                commandContent.style.display = commandContent.style.display === 'block' ? 'none' : 'block';
+            });
+
+            manualButton.addEventListener("click", () => {
+                manualContent.style.display = manualContent.style.display === 'block' ? 'none' : 'block';
+            });
+
+            faseSelect.addEventListener("change", () => {
+                level = parseInt(faseSelect.value, 10);
+                loadLevel(level);
+            });
+
+            startButton.addEventListener("click", () => {
+                loadingOverlay.style.display = 'none';
+                loadLevel(level);
+            });
+
+            robotImage.onload = () => {
+                loadLevel(level);
+            };
+        });
+    </script>
+</body>
+</html>
