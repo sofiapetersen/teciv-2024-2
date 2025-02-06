@@ -482,6 +482,8 @@
                     }
                 }
 
+                let targets_done = 0;
+
                 for (const target of targets) {
                     if (
                         robot.x < target.x + target.width &&
@@ -492,18 +494,26 @@
                         const item = items.find(item => item.collected);
                         if (item && robot.carrying && item.color === target.color) {
                             item.collected = false;
+                            item.x = target.x + target.width/2;
+                            item.y = target.y + target.width/2;
+                            target.done = true;
                             robot.carrying = false;
                             itemStatus.textContent = 'SOLTO';
                             alert('Parabéns! Você soltou o item no local correto.');
                         }
                     }
+                    if (target.done) {
+                        targets_done++
+                    }
                 }
+                console.log(targets_done);
 
                 if (
                     robot.x < endPoint.x + endPoint.width &&
                     robot.x + robot.size > endPoint.x &&
                     robot.y < endPoint.y + endPoint.height &&
-                    robot.y + robot.size > endPoint.y
+                    robot.y + robot.size > endPoint.y &&
+                    targets_done == targets.length
                 ) {
                     alert('Parabéns! Você completou o nível ' + level);
                     level++;
@@ -559,7 +569,7 @@
                         { x: 400, y: 50, size: 30, color: 'rgb(0,255,0)', collected: false, hint: 'Item1' }
                     ];
                     targets = [
-                        { x: 410, y: 300, width: 90, height: 76.5, color: 'rgb(0,255,0)', hint: 'Destino Item' }
+                        { x: 410, y: 300, width: 90, height: 76.5, color: 'rgb(0,255,0)', done: false, hint: 'Destino Item' }
                     ];
                     endPoint = { x: 90, y: 200, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
                     objectiveContent.innerHTML = '<p>Fase 5: Levar os itens até os destinos marcados.</p>';
