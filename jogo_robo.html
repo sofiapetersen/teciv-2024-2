@@ -377,13 +377,20 @@
             const robotImage = new Image();
             robotImage.src = 'https://people.ufpr.br/~jefer/doutorado/metaverses/ra/imagens/mannabot.png';
 
+            const cores = [
+                {nome:"N/A", cod: "rgb(0,0,0)"},
+                {nome:"VERDE", cod:"rgb(0,255,0)"},
+                {nome:"AZUL", cod:"rgb(0,0,255)"},
+                {nome:"LARANJA", cod:"rgb(255,165,0)"}
+        ]
+
             let robot = {
                 x: 50,
                 y: 50,
-                size: 66,
+                size: 50,
                 moveStep: 2,
                 carrying: false,
-                color: 'N/A',
+                color: 0,
                 direction: 'direita'
             };
 
@@ -428,7 +435,7 @@
 
             function drawItems() {
                 items.forEach(item => {
-                    ctx.fillStyle = item.color;
+                    ctx.fillStyle = cores[item.color].cod;
                     ctx.beginPath();
                     ctx.arc(item.x, item.y, item.size, 0, Math.PI * 2);
                     ctx.fill();
@@ -437,7 +444,7 @@
 
             function drawTargets() {
                 targets.forEach(target => {
-                    ctx.strokeStyle = target.color;
+                    ctx.strokeStyle = cores[target.color].cod;
                     ctx.strokeRect(target.x, target.y, target.width, target.height);
                 });
             }
@@ -528,7 +535,7 @@
                 robot.x = 50;
                 robot.y = 50;
                 robot.carrying = false;
-                robot.color = 'N/A';
+                robot.color = 0;
                 items = [];
                 obstacles = [];
                 targets = [];
@@ -566,10 +573,10 @@
                     objectiveContent.innerHTML = '<p>Fase 4: Levar o robô até o ponto final através de um labirinto simples.</p>';
                 } else if (level === 5) {
                     items = [
-                        { x: 400, y: 50, size: 30, color: 'rgb(0,255,0)', collected: false, hint: 'Item1' }
+                        { x: 400, y: 50, size: 30, color: 1, collected: false, hint: 'Item1' }
                     ];
                     targets = [
-                        { x: 410, y: 300, width: 90, height: 76.5, color: 'rgb(0,255,0)', done: false, hint: 'Destino Item' }
+                        { x: 410, y: 300, width: 90, height: 76.5, color: 1, done: false, hint: 'Destino Item' }
                     ];
                     endPoint = { x: 90, y: 200, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
                     objectiveContent.innerHTML = '<p>Fase 5: Levar os itens até os destinos marcados.</p>';
@@ -695,11 +702,11 @@
                         commandsQueue = expandedCommands.split('\n').concat(commandsQueue);
                         processCommandQueue();
                     } else if (action === 'se') {
-                        const color = parts[1].slice(1, -1);
+                        const color = parts[1].slice(1, -1).toUpperCase();
                         const conditionCommands = command.slice(command.indexOf('{') + 1, command.lastIndexOf('}')).trim();
-                        console.log("robo: " + robot.color)
+                        console.log("robo: " + cores[robot.color].nome)
                         console.log("cor: " + color)
-                        if (robot.color === color) {
+                        if (cores[robot.color].nome === color) {
                             commandsQueue = conditionCommands.split('\n').concat(commandsQueue);
                         }
                         processCommandQueue();
@@ -750,7 +757,7 @@
             }
 
             function updateColorStatus() {
-                colorStatus.textContent = robot.color;
+                colorStatus.textContent = cores[robot.color].nome;
             }
 
             function showSpeechBox(phrase) {
