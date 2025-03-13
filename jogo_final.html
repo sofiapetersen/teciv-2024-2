@@ -329,9 +329,9 @@
         <p><strong>Fase 2:</strong> Levar o robô até o ponto final com obstáculos. Os alunos devem planejar como evitar os obstáculos.</p>
         <p><strong>Fase 3:</strong> Levar o robô até o ponto final com mais obstáculos. Mais planejamento será necessário.</p>
         <p><strong>Fase 4:</strong> Levar o robô através de um labirinto simples até o ponto final.</p>
-        <p><strong>Fase 5:</strong> Levar os itens até os destinos marcados.</p>
-        <p><strong>Fase 6:</strong> Levar os itens até os destinos marcados com obstáculos.</p>
-        <p><strong>Fase 7:</strong> Levar os itens até os destinos marcados, desviando os obstáculos.</p>
+        <p><strong>Fase 5:</strong> Levar os itens até suas cores correspondentes, utilizando condicionais para descobrir qual a cor das bolinihas.</p>
+        <p><strong>Fase 6:</strong> Levar os itens até suas cores correspondentes, utilizando condicionais para descobrir qual a cor das bolinihas, com obstáculos.</p>
+        <p><strong>Fase 7:</strong> Levar os itens até suas cores correspondentes, utilizando condicionais para descobrir qual a cor das bolinihas, com obstáculos.</p>
         <p><strong>Fase 8:</strong> Utilizar condicionais de cores para levar os itens aos destinos correspondentes.</p>
         <h3>Perguntas de feedback para os alunos</h3>
         <ul>
@@ -381,7 +381,9 @@
                 {nome:"N/A", cod: "rgb(0,0,0)"},
                 {nome:"VERDE", cod:"rgb(0,255,0)"},
                 {nome:"AZUL", cod:"rgb(0,0,255)"},
-                {nome:"LARANJA", cod:"rgb(255,165,0)"}
+                {nome:"LARANJA", cod:"rgb(255,165,0)"},
+                {nome:"ROSA", cod:"rgb(255,20,147)"},
+                {nome:"CINZA", cod:"rgb(80,80,80)"}
         ]
 
             let robot = {
@@ -398,6 +400,7 @@
             let items = [];
             let targets = [];
             let endPoint = { x: 450, y: 200, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+            let exits = [];
             let level = 1;
             let commandsQueue = [];
             let speechBoxes = [];
@@ -435,7 +438,11 @@
 
             function drawItems() {
                 items.forEach(item => {
-                    ctx.fillStyle = cores[item.color].cod;
+                    if(robot.carrying){
+                        ctx.fillStyle = cores[item.color].cod;
+                    }else{
+                        ctx.fillStyle = cores[item.display].cod;
+                    }
                     ctx.beginPath();
                     ctx.arc(item.x, item.y, item.size, 0, Math.PI * 2);
                     ctx.fill();
@@ -450,8 +457,10 @@
             }
 
             function drawEndPoint() {
-                ctx.strokeStyle = endPoint.color;
-                ctx.strokeRect(endPoint.x, endPoint.y, endPoint.width, endPoint.height);
+                for(const exit of exits){
+                    ctx.strokeStyle = cores[exit.color].cod;
+                    ctx.strokeRect(exit.x, exit.y, exit.width, exit.height);
+                }
             }
 
             function detectCollisions() {
@@ -489,43 +498,20 @@
                     }
                 }
 
-                let targets_done = 0;
-
-                for (const target of targets) {
+                for (const exit of exits) {
                     if (
-                        robot.x < target.x + target.width &&
-                        robot.x + robot.size > target.x &&
-                        robot.y < target.y + target.height &&
-                        robot.y + robot.size > target.y
+                        robot.x < exit.x + exit.width &&
+                        robot.x + robot.size > exit.x &&
+                        robot.y < exit.y + exit.height &&
+                        robot.y + robot.size > exit.y
                     ) {
-                        const item = items.find(item => item.collected);
-                        if (item && robot.carrying && item.color === target.color) {
-                            item.collected = false;
-                            item.x = target.x + target.width/2;
-                            item.y = target.y + target.width/2;
-                            target.done = true;
-                            robot.carrying = false;
-                            itemStatus.textContent = 'SOLTO';
-                            alert('Parabéns! Você soltou o item no local correto.');
+                        if (cores[exit.color].nome == "ROSA" || robot.color == exit.color){
+                            alert('Parabéns! Você completou o nível ' + level);
+                            level++;
+                            loadLevel(level);
+                            return true;
                         }
                     }
-                    if (target.done) {
-                        targets_done++
-                    }
-                }
-                console.log(targets_done);
-
-                if (
-                    robot.x < endPoint.x + endPoint.width &&
-                    robot.x + robot.size > endPoint.x &&
-                    robot.y < endPoint.y + endPoint.height &&
-                    robot.y + robot.size > endPoint.y &&
-                    targets_done == targets.length
-                ) {
-                    alert('Parabéns! Você completou o nível ' + level);
-                    level++;
-                    loadLevel(level);
-                    return true;
                 }
 
                 return false;
@@ -540,7 +526,9 @@
                 obstacles = [];
                 targets = [];
                 if (level === 1) {
-                    endPoint = { x: 410, y: 300, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+                    exits = [
+                        { x: 410, y: 300, width: 90, height: 76.5, hint: 'Ponto Final', color: 4 }
+                    ];
                     objectiveContent.innerHTML = '<p>Fase 1: Levar o robô até o ponto final.</p>';
                 } else if (level === 2) {
                     obstacles = [
@@ -548,7 +536,9 @@
                         { x: 300, y: 150, width: 50, height: 50 },
                         { x: 400, y: 250, width: 50, height: 50 }
                     ];
-                    endPoint = { x: 410, y: 300, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+                    exits = [
+                        { x: 410, y: 300, width: 90, height: 76.5, hint: 'Ponto Final', color: 4 }
+                    ];
                     objectiveContent.innerHTML = '<p>Fase 2: Levar o robô até o ponto final, mas vão ter 3 obstáculos no meio do caminho.</p>';
                 } else if (level === 3) {
                     obstacles = [
@@ -558,7 +548,10 @@
                         { x: 200, y: 200, width: 50, height: 50 },
                         { x: 380, y: 80, width: 50, height: 50 }
                     ];
-                    endPoint = { x: 410, y: 300, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+                    exits = [
+                        { x: 410, y: 300, width: 90, height: 76.5, hint: 'Ponto Final', color: 4 }
+                    ];
+                    
                     objectiveContent.innerHTML = '<p>Fase 3: Levar o robô até o ponto final, mas vão ter 5 obstáculos no meio do caminho.</p>';
                 } else if (level === 4) {
                     obstacles = [
@@ -569,18 +562,35 @@
                         { x: 350, y: 200, width: 50, height: 50 },
                         { x: 400, y: 250, width: 50, height: 50 }
                     ];
-                    endPoint = { x: 255, y: 240, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
+                    exits = [
+                        { x: 255, y: 240, width: 90, height: 76.5, hint: 'Ponto Final', color: 4 }
+                    ];
+                    
                     objectiveContent.innerHTML = '<p>Fase 4: Levar o robô até o ponto final através de um labirinto simples.</p>';
                 } else if (level === 5) {
                     items = [
-                        { x: 400, y: 50, size: 30, color: 1, collected: false, hint: 'Item1' }
+                        { x: 100, y: 200, size: 30, color: Math.floor(Math.random()*2)+1, display: 5, collected: false, hint: 'Chave' }
                     ];
-                    targets = [
-                        { x: 410, y: 300, width: 90, height: 76.5, color: 1, done: false, hint: 'Destino Item' }
+                    exits = [
+                        { x: 400, y: 300, width: 90, height: 76.5, hint: 'Porta Verde', color: 1 },
+                        { x: 400, y: 150, width: 90, height: 76.5, hint: 'Porta Azul', color: 2 }
                     ];
-                    endPoint = { x: 90, y: 200, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
-                    objectiveContent.innerHTML = '<p>Fase 5: Levar os itens até os destinos marcados.</p>';
+                    objectiveContent.innerHTML = '<p>Fase 5: Levar a chave até a porta correta.</p>';
                 } else if (level === 6) {
+                    obstacles = [
+                        { x: 150, y: 150, width: 50, height: 50 },
+                        { x: 200, y: 200, width: 50, height: 50 },
+                        { x: 250, y: 250, width: 50, height: 50 }
+                    ];
+                    items = [
+                        { x: 400, y: 50, size: 30, color: Math.floor(Math.random()*2)+1, display: 5, collected: false, hint: 'Chave' }
+                    ];
+                    exits = [
+                        { x: 400, y: 300, width: 90, height: 76.5, hint: 'Porta Verde', color: 1 },
+                        { x: 400, y: 150, width: 90, height: 76.5, hint: 'Porta Azul', color: 2 }
+                    ];
+                    objectiveContent.innerHTML = '<p>Fase 7: Levar a chave até a porta correta, desviando os obstáculos.</p>';
+                } else if (level === 7) {
                     obstacles = [
                         { x: 150, y: 150, width: 50, height: 50 },
                         { x: 200, y: 200, width: 50, height: 50 },
@@ -589,42 +599,23 @@
                         { x: 350, y: 150, width: 50, height: 50 }
                     ];
                     items = [
-                        { x: 400, y: 50, size: 30, color: 1, collected: false, hint: 'Item1' }
+                        { x: 400, y: 50, size: 30, color: Math.floor(Math.random()*2)+1, display: 5, collected: false, hint: 'Chave' }
                     ];
-                    targets = [
-                        { x: 410, y: 300, width: 90, height: 76.5, color: 1, hint: 'Destino Item' }
+                    exits = [
+                        { x: 50, y: 300, width: 90, height: 76.5, hint: 'Porta Verde', color: 1 },
+                        { x: 400, y: 150, width: 90, height: 76.5, hint: 'Porta Azul', color: 2 }
                     ];
-                    endPoint = { x: 110, y: 300, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
-                    objectiveContent.innerHTML = '<p>Fase 6: Levar os itens até os destinos marcados, com obstáculos no caminho.</p>';
-                } else if (level === 7) {
-                    obstacles = [
-                        { x: 150, y: 150, width: 50, height: 50 },
-                        { x: 200, y: 200, width: 50, height: 50 },
-                        { x: 250, y: 250, width: 50, height: 50 }
-                    ];
-                    items = [
-                        { x: 300, y: 150, size: 30, color: 1, collected: false, hint: 'Verde' },
-                        { x: 200, y: 350, size: 30, color: 2, collected: false, hint: 'Azul' }
-                    ];
-                    targets = [
-                        { x: 410, y: 300, width: 90, height: 76.5, color: 1, hint: 'Destino Verde' },
-                        { x: 400, y: 150, width: 90, height: 76.5, color: 2, hint: 'Destino Azul' }
-                    ];
-                    endPoint = { x: 410, y: 200, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
-                    objectiveContent.innerHTML = '<p>Fase 7: Levar os itens até os destinos marcados, desviando os obstáculos.</p>';
+                    objectiveContent.innerHTML = '<p>Fase 6: Levar a chave até a porta correta, com obstáculos no caminho.</p>';
                 } else if (level === 8) {
                     items = [
-                        { x: 150, y: 50, size: 30, color: 2, collected: false, hint: 'Azul' },
-                        { x: 300, y: 100, size: 30, color: 3, collected: false, hint: 'Laranja' },
-                        { x: 450, y: 200, size: 30, color: 1, collected: false, hint: 'Verde' }
+                        { x: 400, y: 50, size: 30, color: Math.floor(Math.random()*3)+1, display: 5, collected: false, hint: 'Chave' }
                     ];
-                    targets = [
-                        { x: 150, y: 200, width: 50, height: 50, color: 2, hint: 'Destino Azul' },
-                        { x: 300, y: 300, width: 50, height: 50, color: 3, hint: 'Destino Laranja' },
-                        { x: 400, y: 300, width: 50, height: 50, color: 1, hint: 'Destino Verde' }
+                    exits = [
+                        { x: 150, y: 200, width: 50, height: 50, hint: 'Porta Azul', color: 2 },
+                        { x: 300, y: 300, width: 50, height: 50, hint: 'Porta Laranja', color: 3 },
+                        { x: 400, y: 300, width: 50, height: 50, hint: 'Porta Verde', color: 1 }
                     ];
-                    endPoint = { x: 380, y: 90, width: 90, height: 76.5, hint: 'Ponto Final', color: 'rgb(255, 20, 147)' };
-                    objectiveContent.innerHTML = '<p>Fase 8: Utilizar condicionais de cores para levar os itens aos destinos correspondentes.</p>';
+                    objectiveContent.innerHTML = '<p>Fase 8: Utilizar condicionais de cores para levar a chave até a porta correta.</p>';
                 }
                 drawScene();
             }
@@ -695,22 +686,44 @@
                     if (action === 'mover') {
                         const direction = parts[2];
                         moveRobot(value, direction);
-                    } else if (action === 'repita') {
+                    }
+                    else if (action === 'repita') {
                         const repeatCount = parseInt(parts[1].slice(1, -1), 10);
                         const repeatCommands = command.slice(command.indexOf('{') + 1, command.lastIndexOf('}')).trim();
                         const expandedCommands = Array(repeatCount).fill(repeatCommands).join('\n');
                         commandsQueue = expandedCommands.split('\n').concat(commandsQueue);
                         processCommandQueue();
-                    } else if (action === 'se') {
+                    }
+                    else if (action === 'se') {
                         const color = parts[1].slice(1, -1).toUpperCase();
-                        const conditionCommands = command.slice(command.indexOf('{') + 1, command.lastIndexOf('}')).trim();
-                        console.log("robo: " + cores[robot.color].nome)
-                        console.log("cor: " + color)
-                        if (cores[robot.color].nome === color) {
-                            commandsQueue = conditionCommands.split('\n').concat(commandsQueue);
+
+                        // Se o comando está no formato reduzido
+                        if(parts.includes('}')){
+                            const conditionCommands = command.slice(command.indexOf('{') + 1, command.lastIndexOf('}')).trim();
+                            console.log("robo: " + cores[robot.color].nome)
+                            console.log("cor: " + color)
+                            if (cores[robot.color].nome === color) {
+                                commandsQueue = conditionCommands.split('\n').concat(commandsQueue);
+                            }
+                        } // Se o comando está no novo formato
+                        else{
+                            let subCommands = []
+                            let abreChaves = 0;
+                            while (1) {
+                                let sub = commandsQueue.shift();
+                                if(sub.includes('{')) abreChaves++; 
+                                if(sub.includes('}')) abreChaves--;
+                                if(abreChaves < 0) break;
+                                subCommands.push(sub.trim());
+                            }
+                            if(cores[robot.color].nome === color && subCommands.length > 0){
+                                commandsQueue = subCommands.concat(commandsQueue);
+                            }
                         }
                         processCommandQueue();
-                    } else if (action === 'PEGAR' && parts[1] === 'ITEM') {
+                        
+                    }
+                    else if (action === 'PEGAR' && parts[1] === 'ITEM') {
                         showCommand('PEGAR ITEM');
                         if (!robot.carrying) {
                             const item = items.find(item => !item.collected && Math.abs(robot.x + robot.size / 2 - item.x) < item.size && Math.abs(robot.y + robot.size / 2 - item.y) < item.size);
@@ -726,7 +739,8 @@
                         } else {
                             alert('Você já está carregando um item!');
                         }
-                    } else if (action === 'SOLTAR' && parts[1] === 'ITEM') {
+                    }
+                    else if (action === 'SOLTAR' && parts[1] === 'ITEM') {
                         showCommand('SOLTAR ITEM');
                         if (robot.carrying) {
                             const item = items.find(item => item.collected);
@@ -746,7 +760,8 @@
                         } else {
                             alert('Você não está carregando nenhum item!');
                         }
-                    } else if (action === 'diga') {
+                    }
+                    else if (action === 'diga') {
                         const phrase = command.slice(command.indexOf('"') + 1, command.lastIndexOf('"'));
                         showSpeechBox(phrase);
                         processCommandQueue();
